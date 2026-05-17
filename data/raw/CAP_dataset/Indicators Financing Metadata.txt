@@ -1,0 +1,10 @@
+﻿Bulk Download Information
+Name: DG AGRI Financing Indicator Data
+File generation date: 21/05/2025 14:52:09
+Last data update:24/06/2024
+Number of rows:34496
+ 
+Data frequency: Weekly
+Date Range: 1995 to 2022
+Dimensions: Indicator Code, Indicator Type, Indicator Category, Indicator Name, Sub-indicator Name, Sub-indicator Parameter, Sub-indicator Unit,Member State Code, Member State Name, Time Period, Flag
+Values: Data
