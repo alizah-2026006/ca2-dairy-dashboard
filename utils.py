@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
 import sqlalchemy
 from dotenv import load_dotenv
 
-load_dotenv(".env")
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
