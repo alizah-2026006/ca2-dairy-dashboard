@@ -1,4 +1,6 @@
-#  Imports and environment setup
+# ============================================================
+# 1. IMPORTS AND APP SETUP
+# ============================================================
 
 from datetime import datetime
 from pathlib import Path
@@ -13,14 +15,21 @@ from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
 
-# Project paths
+# ============================================================
+# PROJECT PATHS
+# ============================================================
+
 # app.py is stored at the main CA-2 folder level.
 # The deployed app reads from CSV files inside data/processed.
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data" / "processed"
 
 
-# Create Dash app
+# ============================================================
+# CREATE DASH APP
+# ============================================================
+
+# Create one Dash app only. All four dashboard tabs are part of this app.
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -34,7 +43,11 @@ server = app.server
 graph_config = {"displayModeBar": False}
 
 
-# Centralising colours and styles to prevents repeated hard-coded styling for all sliders.
+# ============================================================
+# 2. SHARED DESIGN SYSTEM
+# ============================================================
+
+# Centralising colours and styles prevents repeated hard-coded styling across the app.
 IRELAND_COLOR = "#1f7a5c"
 PEER_COLOR = "#6b8ba4"
 POSITIVE_COLOR = "#1f7a5c"
@@ -81,6 +94,9 @@ MAIN_HEADING_STYLE = {
     "marginBottom": "1.6rem"
 }
 
+
+# The action-plan tab uses the same visual weight as the other dashboard sections.
+# This prevents the fourth tab headings from looking heavier than the other tabs.
 ACTION_MAIN_HEADING_STYLE = {
     "fontWeight": "600",
     "fontSize": "1.25rem",
@@ -185,7 +201,7 @@ LIMITATION_TEXT_STYLE = {
     "lineHeight": "1.5"
 }
 
-# Create functions for each tasks to avaid repetitions
+
 def tufte_note(label, text):
     """Create a compact evidence note following Tufte-style minimal explanation."""
     return html.Div(
@@ -302,7 +318,10 @@ def apply_clean_layout(fig, height=430, margin=None, hovermode=None, showlegend=
     )
     return fig
 
-# Some more generally used functions with doc string
+# ============================================================
+# 3. GENERAL HELPER FUNCTIONS
+# ============================================================
+
 
 def clean_feature_name(feature):
     """Convert model/database feature names into farmer-readable labels."""
@@ -355,12 +374,16 @@ def format_growth(value):
         return "not available"
     return f"{value:.1f}%"
 
-# Load data for all four sliders
+# ============================================================
+# 4. LOAD DATA ONCE FROM CSV FILES
+# ============================================================
 
 def load_processed_csv(file_name):
     """
+    Load one processed CSV file from data/processed.
+
     The deployed dashboard reads CSV files instead of MySQL because
-    Render cannot access a local MySQL database running on my laptop.
+    Render cannot access a local MySQL database running on your laptop.
     """
     file_path = DATA_DIR / file_name
 
@@ -373,16 +396,28 @@ def load_processed_csv(file_name):
 
 
 # Load the final processed datasets used by the dashboard.
+# These filenames match the files in your data/processed folder.
 predict_df = load_processed_csv("predict_df.csv")
 sentiment_df = load_processed_csv("sentiment_df.csv")
 ml_feature_importance = load_processed_csv("ml_feature_importance.csv")
 
 
 # Standardise one known column-name issue before creating dashboard datasets.
-predict_df = predict_df.rename(columns={"milk_delivered to dairies_1000t": "milk_delivered_to_dairies_1000t"})
+predict_df = predict_df.rename(
+    columns={
+        "milk_delivered to dairies_1000t": "milk_delivered_to_dairies_1000t"
+    }
+)
+
 
 # Ireland export trend data.
-ireland_df = (predict_df[predict_df["country"] == "Ireland"][["year", "total_dairy_export_value_1000USD"]].sort_values("year").copy())
+ireland_df = (
+    predict_df[predict_df["country"] == "Ireland"]
+    [["year", "total_dairy_export_value_1000USD"]]
+    .sort_values("year")
+    .copy()
+)
+
 
 # Ireland product-level export data.
 product_export_columns = {
@@ -393,7 +428,11 @@ product_export_columns = {
 }
 
 required_product_columns = ["year"] + list(product_export_columns.keys())
-missing_product_columns = [column for column in required_product_columnsif column not in predict_df.columns]
+
+missing_product_columns = [
+    column for column in required_product_columns
+    if column not in predict_df.columns
+]
 
 if missing_product_columns:
     raise KeyError(
@@ -411,15 +450,27 @@ product_export_df = (
 
 
 # Wider EU comparison data for benchmarking and policy/output evidence.
-comparison_countries = ["Ireland","France","Germany","Italy","Netherlands","Poland"]
+comparison_countries = [
+    "Ireland",
+    "France",
+    "Germany",
+    "Italy",
+    "Netherlands",
+    "Poland"
+]
+
 comparison_df = (
     predict_df[predict_df["country"].isin(comparison_countries)]
     .sort_values(["country", "year"])
     .copy()
 )
 
-# Clean and prepare the data
-# Some SQL column names contain spaces. Rename once so the rest of the code wil be easier to maintain.
+
+# ============================================================
+# 5. CLEAN AND PREPARE DATA
+# ============================================================
+
+# Some SQL column names contain spaces. Rename once so the rest of the code is easier to maintain.
 comparison_df = comparison_df.rename(
     columns={"milk_delivered to dairies_1000t": "milk_delivered_to_dairies_1000t"}
 )
@@ -589,8 +640,9 @@ if "perspective" in sentiment_df.columns:
     breakdown_options.append({"label": "By perspective", "value": "perspective"})
 default_breakdown = "country" if "country" in sentiment_df.columns else breakdown_options[0]["value"]
 
-
-# Benchmark Feature Definitions
+# ============================================================
+# 6. BENCHMARKING FEATURE DEFINITIONS
+# ============================================================
 
 FEATURE_OPTIONS = {
     "milk_prod_1000t": {
@@ -784,8 +836,9 @@ def describe_change(start_value, end_value, feature):
         return f"decreased by {abs(pct_change):.1f}%"
     return "stayed unchanged"
 
-
-# Static Figures and Evidence Text
+# ============================================================
+# 7. STATIC FIGURES AND EVIDENCE TEXT
+# ============================================================
 
 # Export trend figure.
 export_fig = px.line(
@@ -800,7 +853,7 @@ apply_clean_layout(export_fig, height=430, margin=dict(t=20, b=40, l=60, r=40), 
 export_fig.update_layout(showlegend=False)
 export_fig.update_xaxes(tickmode="linear", dtick=1)
 
-# ML driver figure.
+# ML driver lollipop figure.
 def make_driver_figure():
     """Create a lollipop chart showing the strongest model signals."""
     fig = go.Figure()
@@ -979,7 +1032,9 @@ else:
     cap_change_text = "Latest CAP payment data was not available after filtering."
     cap_interpretation_text = "Policy support should still be monitored because payment and regulation changes can affect planning."
 
-# Recommendation Data
+# ============================================================
+# 8. RECOMMENDATION DATA
+# ============================================================
 
 RECOMMENDATION_DATA = {
     "export_growth": {
@@ -1088,7 +1143,11 @@ RECOMMENDATION_DATA = {
     }
 }
 
-# Building layout for each tab
+# ============================================================
+# 9. LAYOUT BUILDERS FOR EACH TAB
+# ============================================================
+
+
 def build_overview_tab():
     """Overview tab: Irish export trend and product demand by year."""
     default_product_year = int(product_export_df["year"].max())
@@ -1373,7 +1432,9 @@ def build_action_plan_tab():
         ]
     )
 
-# Callbacks
+# ============================================================
+# 11. CALLBACKS
+# ============================================================
 
 @app.callback(
     Output("product-export-chart", "figure"),
@@ -1716,7 +1777,9 @@ def update_recommendation_view(selected_focus):
         selected_focus = "farm_productivity"
     return make_recommendation_view(selected_focus)
 
-# Main app layout
+# ============================================================
+# 10. MAIN APP LAYOUT
+# ============================================================
 
 app.layout = dbc.Container([
     html.H1(
@@ -1743,9 +1806,12 @@ app.layout = dbc.Container([
 
 ], fluid=False, style=PAGE_STYLE)
 
+# ============================================================
+# 12. RUN THE DASHBOARD LOCALLY
+# ============================================================
 
 # Render will use: gunicorn app:server
-# This block only runs when we test the app locally with: python app.py
+# This block only runs when you test the app locally with: python app.py
 if __name__ == "__main__":
     if app.layout is None:
         raise RuntimeError(
