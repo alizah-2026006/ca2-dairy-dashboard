@@ -20,4 +20,6 @@ The processed CSV files are also included in the repository so that the final an
 
 The interactive farmer-focused dashboard was developed using Plotly Dash. It presents export performance, product demand, country benchmarking, sentiment signals and farmer-focused recommendations.
 
-Live dashboard link: https://ca2-dairy-dashboard-1.onrender.com/ 
+Live dashboard link: To be added after deployment.
+
+The dashboard can also be run locally from the dashboard notebook or deployment `app.py` file.
